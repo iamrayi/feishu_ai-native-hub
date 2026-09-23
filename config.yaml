@@ -1,0 +1,100 @@
+# AI Native Hub — 配置文件
+# 5个独立飞书应用，共用1个后端服务
+# 每个应用在群里有独立头像和名字，@不同机器人触发不同人格
+
+# DeepSeek API
+deepseek:
+  api_key: "sk-d4c501d9fd31466f953f3e02ecf6b842"
+  model: "deepseek-chat"
+  base_url: "https://api.deepseek.com/v1"
+
+# 飞书多应用配置
+# 每个机器人注册一个独立的飞书自建应用，拥有独立头像和名称
+# 注册方法见 README.md
+feishu_bots:
+  istj:
+    name: "ISTJ总指挥"
+    app_id: "cli_aa394a2580b89bfc"
+    app_secret: "RkcWoqwGI8XPP7ejF0vXsgFdP5oEgYdY"
+    verification_token: "cakg0C3mttkuV01JlsLkFbPBsIIzaKTm"
+    card_color: "blue"
+    avatar_hint: "冷静深蓝色头像"
+
+  enfp:
+    name: "ENFP热点情报员"
+    app_id: "cli_aa39415eb4389bc1"
+    app_secret: "s2umdd4CxKG137t4KJVnGb8jfizLa8dE"
+    verification_token: "JwKw3iO9Tw7ApgwJARGPyeiQOu0ddXNV"
+    card_color: "green"
+    avatar_hint: "活力绿色头像"
+
+  estj:
+    name: "ESTJ KOL监察官"
+    app_id: "cli_xxxxxxxxxx"
+    app_secret: "xxxxxxxxxxxxxxxxxxxxxxxx"
+    verification_token: "xxxxxxxxxxxxxxxxxxxxxxxx"
+    card_color: "orange"
+    avatar_hint: "橙色监察头像"
+
+  intj:
+    name: "INTJ竞品分析师"
+    app_id: "cli_xxxxxxxxxx"
+    app_secret: "xxxxxxxxxxxxxxxxxxxxxxxx"
+    verification_token: "xxxxxxxxxxxxxxxxxxxxxxxx"
+    card_color: "purple"
+    avatar_hint: "紫色分析头像"
+
+  isfp:
+    name: "ISFP创作参谋"
+    app_id: "cli_xxxxxxxxxx"
+    app_secret: "xxxxxxxxxxxxxxxxxxxxxxxx"
+    verification_token: "xxxxxxxxxxxxxxxxxxxxxxxx"
+    card_color: "turquoise"
+    avatar_hint: "青色创意头像"
+
+# RSSHub 自建实例
+rsshub:
+  self_hosted_url: "https://rsshub-production-4b76.up.railway.app"
+
+# follow-builders 数据源
+follow_builders:
+  base_url: "https://raw.githubusercontent.com/zarazhangrui/follow-builders/main"
+
+# 国内平台
+xiaohongshu:
+  bloggers:
+    - name: "张咋啦"
+      user_id: "59757acd50c4b45e6e9a90df"
+
+douyin:
+  keywords: ["AI工具", "AI教程"]
+
+zhihu:
+  topics:
+    - hot: true
+
+# 海外平台
+instagram:
+  enabled: true
+  accounts: ["@midjourney", "@openai", "@anthropic.ai", "@cursor.ai"]
+
+twitter_kol:
+  handles:
+    - "karpathy"
+    - "sama"
+    - "gdb"
+    - "alexalbert"
+    - "amasad"
+    - "swyx"
+    - "garrytan"
+    - "petergyang"
+    - "artinzhang"
+    - "op7418"
+
+github:
+  token: ""
+  search_queries:
+    - "AI created:>2025-09-08"
+    - "LLM agent created:>2025-09-08"
+    - "copilot AI tool"
+  per_page: 10
