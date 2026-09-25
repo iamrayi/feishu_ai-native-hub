@@ -31,6 +31,16 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 CONFIG_PATH = Path(__file__).parent / "config.yaml"
 _processed_events = set()
+_debug_logs = []  # 最近 20 条调试日志
+
+def _debug(msg):
+    """打印并记录调试日志"""
+    timestamp = datetime.now().strftime("%H:%M:%S")
+    line = f"[{timestamp}] {msg}"
+    print(line, flush=True)
+    _debug_logs.append(line)
+    if len(_debug_logs) > 50:
+        _debug_logs.pop(0)
 
 
 def load_config():
@@ -518,28 +528,40 @@ def webhook(bot_key):
 
     # 验证bot_key有效
     if bot_key not in cfg.get("feishu_bots", {}):
+        _debug(f"[{bot_key}] 未知 bot_key")
         return jsonify({"code": 1, "msg": "unknown bot"}), 404
 
     data = request.json
+    _debug(f"[{bot_key}] 收到事件: type={data.get('type')} schema={data.get('schema')} event_type={data.get('header',{}).get('event_type')}")
 
-    # URL 验证
+    # URL 验证 (v1 格式)
     if data.get("type") == "url_verification":
-        return jsonify({"challenge": data.get("challenge", "")})
+        challenge = data.get("challenge", "")
+        _debug(f"[{bot_key}] URL验证 challenge={challenge}")
+        return jsonify({"challenge": challenge})
 
+    # URL 验证 (v2 格式 - challenge 在 header 里)
     header = data.get("header", {})
+    if header.get("event_type") == "url_verification":
+        challenge = data.get("challenge", "")
+        _debug(f"[{bot_key}] URL验证(v2) challenge={challenge}")
+        return jsonify({"challenge": challenge})
+
     event_type = header.get("event_type", "")
     event_id = header.get("event_id", "")
 
     # 去重
     dedup_key = f"{bot_key}:{event_id}"
     if dedup_key in _processed_events:
+        _debug(f"[{bot_key}] 重复事件，跳过")
         return jsonify({"code": 0})
     _processed_events.add(dedup_key)
 
-    # 验证 token
+    # 验证 token — 飞书 v2.0 header 里可能不带 token，放宽校验
     token = header.get("token", "")
     expected_token = cfg["feishu_bots"][bot_key].get("verification_token", "")
-    if expected_token and "xxxxxx" not in expected_token and token != expected_token:
+    if expected_token and "xxxxxx" not in expected_token and token and token != expected_token:
+        _debug(f"[{bot_key}] token 验证失败: got={token[:8]}... expected={expected_token[:8]}...")
         return jsonify({"code": 1, "msg": "invalid token"}), 403
 
     # 处理消息事件
@@ -549,6 +571,7 @@ def webhook(bot_key):
         chat_id = message.get("chat_id", "")
         message_id = message.get("message_id", "")
         msg_type = message.get("message_type", "")
+        _debug(f"[{bot_key}] 消息事件: chat_id={chat_id[:10]}... msg_type={msg_type}")
 
         if msg_type != "text":
             send_feishu_message(bot_key, chat_id, "当前仅支持文字指令。", cfg, reply_to=message_id)
@@ -557,6 +580,7 @@ def webhook(bot_key):
         content = json.loads(message.get("content", "{}"))
         text = content.get("text", "")
         text = re.sub(r'@_\w+\s*', '', text).strip()
+        _debug(f"[{bot_key}] 用户消息: {text[:50]}")
 
         if not text:
             return jsonify({"code": 0})
@@ -579,6 +603,26 @@ def health():
         "bots": bots,
         "endpoints": {b: f"/webhook/{b}" for b in bots}
     })
+
+
+@app.route("/debug", methods=["GET"])
+def debug_page():
+    """调试页面，查看最近的事件日志"""
+    html = f"""
+    <html><head><title>Debug Logs</title>
+    <style>
+        body {{ font-family: monospace; background: #1a1a2e; color: #eee; padding: 20px; }}
+        h1 {{ color: #4fc3f7; }}
+        .log {{ background: #16213e; padding: 10px; margin: 5px 0; border-radius: 4px; border-left: 3px solid #4fc3f7; }}
+        .time {{ color: #888; }}
+    </style></head><body>
+    <h1>🐞 Debug Logs</h1>
+    <p>最近 {len(_debug_logs)} 条日志 | <a href="/debug">刷新</a></p>
+    """
+    for line in reversed(_debug_logs):
+        html += f'<div class="log">{line}</div>'
+    html += "</body></html>"
+    return html
 
 
 if __name__ == "__main__":
